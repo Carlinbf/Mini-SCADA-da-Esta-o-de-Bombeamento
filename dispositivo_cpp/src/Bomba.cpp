@@ -9,3 +9,4 @@ void Bomba::ligar() {
 
 void Bomba::desligar() {
     ligada = false;
+}
