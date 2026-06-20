@@ -1,6 +1,6 @@
 # Mini-SCADA-da-Esta-o-de-Bombeamento
 
-Assinatura Operacional da Dupla (EB-158) 
+Assinatura Operacional da Dupla (EB-59) 
 
 | Item | Valor da Dupla | Observação / Faixa da Especificação |
 | --- | --- | --- |
