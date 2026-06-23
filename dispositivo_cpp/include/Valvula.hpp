@@ -8,15 +8,13 @@ private:
     std::string id;
     bool aberta;
 
-public:
-    // Construtor
+public: 
+
     Valvula(std::string idValvula);
 
-    // Métodos de atuação
     void abrir();
     void fechar();
 
-    // Métodos de acesso (Getters)
     std::string getId() const;
     bool estaAberta() const;
 };
