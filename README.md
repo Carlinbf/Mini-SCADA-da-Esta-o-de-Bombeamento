@@ -4,7 +4,7 @@ Assinatura Operacional da Dupla (EB-59)
 
 | Item | Valor da Dupla | Observação / Faixa da Especificação |
 | --- | --- | --- |
-| **Identificador da estação** | EB-158 | Baseado na identidade da dupla.|
+| **Identificador da estação** | EB-59 | Baseado na identidade da dupla.|
 | **Sensores obrigatórios** | NÍVEL, PRESSÃO, TEMPERATURA, VAZÃO | Atende ao mínimo de 4 tipos de sensores.|
 | **Nível baixo** | 28% | Limite de alerta (Faixa: 20% a 35%).|
 | **Nível alto** | 88% | Limite de alerta (Faixa: 75% a 90%).|
