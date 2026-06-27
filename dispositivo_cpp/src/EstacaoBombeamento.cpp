@@ -31,25 +31,49 @@ void EstacaoBombeamento::atualizarSimulacao() {
         sensor->ler(); 
     }
 
-    
-    double nivelAtual = sensores[0]->getValor();
-    double pressaoAtual = sensores[1]->getValor();
+    Sensor* sNivel = sensores[0];
+    Sensor* sPressao = sensores[1];
+    Sensor* sVazao = sensores[3];
 
-    
-    if (nivelAtual < 20.0 && bomba.estaLigada()) {
-        bomba.desligar();
-    }
 
-    
-    if (nivelAtual > 85.0 && bomba.estaLigada()) {
-        bomba.desligar();
-    }
+    if (bomba.estaLigada()) {
+        sVazao->setValor(50.0 + (rand() % 100 - 50) / 100.0);
 
-    
-    if (pressaoAtual > 6.0) {
-        valvulaAuxiliar.abrir();
+        if (sNivel->getValor() < 100.0) {
+            sNivel->setValor(sNivel->getValor() + 0.8);
+        }
+
+        if (!valvulaAuxiliar.estaAberta()) {
+            sPressao->setValor(sPressao->getValor() + 0.3); 
+        }
     } else {
-        valvulaAuxiliar.fechar();
+        sVazao->setValor(0.0);
+        if (sNivel->getValor() > 0.0) {
+            sNivel->setValor(sNivel->getValor() - 0.5); // Esvazia 0.5% por segundo
+        }
+    }   
+
+    if (valvulaAuxiliar.estaAberta() && sPressao->getValor() > 1.0) {
+        sPressao->setValor(sPressao->getValor() - 0.6); 
+    }
+
+    
+    double nivelAtual = sNivel->getValor();
+    double pressaoAtual = sPressao->getValor();
+
+    
+    if (nivelAtual > 88.0 && bomba.estaLigada()) {
+        bomba.desligar();
+    }
+   
+    else if (nivelAtual < 28.0 && !bomba.estaLigada()) {
+        bomba.ligar();
+    }
+
+    if (pressaoAtual > 6.8) {
+        valvulaAuxiliar.abrir(); // Abre para aliviar se passar do limite da dupla 
+    } else if (pressaoAtual <= 4.0) {
+        valvulaAuxiliar.fechar(); // Fecha quando a pressão baixar para uma zona segura
     }
 }
 

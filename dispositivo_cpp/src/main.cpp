@@ -1,6 +1,6 @@
 #include "../include/EstacaoBombeamento.hpp"
 #include <iostream>
-#include <thread>
+#include <windows.h>
 #include <chrono>
 
 int main() {
@@ -12,14 +12,14 @@ int main() {
         estacao.processarComando("LIGAR_BOMBA");
 
         std::cout << "Iniciando a Estacao Bombeamento EB-59...\n";
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        Sleep(1000);
 
         while (true) {
             estacao.atualizarSimulacao();
 
             estacao.renderizarPainel();
 
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            Sleep(1000);
         }
     } 
     catch (const std::exception& e) {
