@@ -63,17 +63,44 @@ void EstacaoBombeamento::atualizarSimulacao() {
 
     
     if (nivelAtual > 88.0 && bomba.estaLigada()) {
-        bomba.desligar();
+        sNivel->setStatus("ALTO");
+        if(bomba.estaLigada()) {
+            bomba.desligar();
+        }
     }
    
     else if (nivelAtual < 28.0 && !bomba.estaLigada()) {
-        bomba.ligar();
+        sNivel->setStatus("BAIXO");
+        if(!bomba.estaLigada()) {
+            bomba.ligar();
+        }
+    }
+    else{
+        sNivel->setStatus("OK");
     }
 
     if (pressaoAtual > 6.8) {
-        valvulaAuxiliar.abrir(); // Abre para aliviar se passar do limite da dupla 
+        sPressao->setStatus("SOBREPRESSAO");
+        valvulaAuxiliar.abrir();
     } else if (pressaoAtual <= 4.0) {
-        valvulaAuxiliar.fechar(); // Fecha quando a pressão baixar para uma zona segura
+        if (pressaoAtual> 5.5){
+            sPressao->setStatus("ALTO");
+        }else{
+            sPressao->setStatus("OK");
+        }
+        valvulaAuxiliar.fechar(); 
+    }
+    else{
+        if (valvulaAuxiliar.estaAberta()) {
+            sPressao->setStatus("ALIVIO");
+        } else {
+            sPressao->setStatus("OK");
+        }
+    }
+    if (bomba.estaLigada()) {
+        sVazao->setStatus("OK");
+    } else {
+        sVazao->setStatus("ZERADA");
     }
 }
 
