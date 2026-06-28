@@ -2,6 +2,7 @@
 #include <iostream>
 #include <windows.h>
 #include <chrono>
+#include <conio.h> 
 
 int main() {
     try {
@@ -15,8 +16,15 @@ int main() {
         Sleep(1000);
 
         while (true) {
-            estacao.atualizarSimulacao();
+            while (_kbhit()) {
+                std::string comando;
+                std::getline(std::cin, comando);
+                if (!comando.empty()) {
+                    estacao.processarComando(comando);
+                }
+            }
 
+            estacao.atualizarSimulacao();
             estacao.renderizarPainel();
 
             Sleep(1000);
