@@ -104,31 +104,34 @@ void EstacaoBombeamento::atualizarSimulacao() {
     }
 }
 
-
 void EstacaoBombeamento::renderizarPainel() {
-    
-    std::cout << "\033[2J\033[1;1H"; 
-    
-    std::cout << "==========================================\n";
-    std::cout << "      ESTACAO DE BOMBEAMENTO EB-59        \n";
-    std::cout << "==========================================\n";
-    std::cout << " STATUS DA BOMBA [" << bomba.getId() << "]: " 
-              << (bomba.estaLigada() ? "LIGADA" : "DESLIGADA") << "\n";
-    std::cout << " ATUADOR AUXILIAR [" << valvulaAuxiliar.getId() << "]: " 
-              << (valvulaAuxiliar.estaAberta() ? "ABERTA (ALIVIO)" : "FECHADA") << "\n";
-    std::cout << " VAZAO ATUAL DA BOMBA: " << bomba.getVazaoAtual() << " L/min\n";
-    std::cout << "------------------------------------------\n";
-    std::cout << " TELEMETRIA DOS SENSORES (COM RUIDO):\n";
-    
-    for (Sensor* sensor : sensores) {
-        std::cout << " -> " << sensor->getTag() << ": " 
-                  << std::fixed << std::setprecision(2) << sensor->getValor() 
-                  << " " << sensor->getUnidade() 
-                  << " [" << sensor->getStatus() << "]\n";
-    }
-    std::cout << "==========================================\n";
-}
+    // Identifica os sensores para extrair os dados do contrato
+    Sensor* sNivel = sensores[0];
+    Sensor* sPressao = sensores[1];
+    Sensor* sVazao = sensores[3];
 
+    // Envia os dados estruturados em formato JSON Lines (uma linha por objeto JSON)
+    // Atende aos campos obrigatórios: tag, valor, unidade, status (timestamp gerado no Python)
+    std::cout << "{\"tag\": \"NI-59\", \"valor\": " << sNivel->getValor() 
+              << ", \"unidade\": \"%\", \"status\": \"" << sNivel->getStatus() << "\"}\n";
+
+    std::cout << "{\"tag\": \"PI-59\", \"valor\": " << sPressao->getValor() 
+              << ", \"unidade\": \"bar\", \"status\": \"" << sPressao->getStatus() << "\"}\n";
+
+    std::cout << "{\"tag\": \"FI-59\", \"valor\": " << sVazao->getValor() 
+              << ", \"unidade\": \"L/min\", \"status\": \"" << sVazao->getStatus() << "\"}\n";
+
+    // Envia o estado dos atuadores para o supervisor mapear
+    std::cout << "{\"tag\": \"B-1\", \"valor\": " << (bomba.estaLigada() ? 1 : 0) 
+              << ", \"unidade\": \"booleano\", \"status\": \"" << (bomba.estaLigada() ? "LIGADA" : "DESLIGADA") << "\"}\n";
+
+    std::cout << "{\"tag\": \"V-1\", \"valor\": " << (valvulaAuxiliar.estaAberta() ? 1 : 0) 
+              << ", \"unidade\": \"booleano\", \"status\": \"" << (valvulaAuxiliar.estaAberta() ? "ABERTA" : "FECHADA") << "\"}\n";
+              
+    // Delimitador de fim de ciclo para o Python saber que o bloco terminou
+    std::cout << "---FIM_CICLO---\n";
+    std::cout.flush();
+}
 
 void EstacaoBombeamento::processarComando(const std::string& comando) {
     if (comando == "LIGAR_BOMBA") {
