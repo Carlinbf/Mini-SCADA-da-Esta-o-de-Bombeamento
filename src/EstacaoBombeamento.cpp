@@ -4,10 +4,10 @@
 #include <iostream>
 #include <iomanip>
 
+static int ciclo_tempo = 0;
 
 EstacaoBombeamento::EstacaoBombeamento() 
     : bomba("B-1", 50.0), valvulaAuxiliar("V-1") {}
-
 
 EstacaoBombeamento::~EstacaoBombeamento() {
     for (Sensor* sensor : sensores) {
@@ -16,7 +16,6 @@ EstacaoBombeamento::~EstacaoBombeamento() {
     sensores.clear();
 }
 
-
 void EstacaoBombeamento::inicializarEstacao() {
     sensores.push_back(SensorFactory::criarSensor("NIVEL"));
     sensores.push_back(SensorFactory::criarSensor("PRESSAO"));
@@ -24,32 +23,55 @@ void EstacaoBombeamento::inicializarEstacao() {
     sensores.push_back(SensorFactory::criarSensor("VAZAO"));
 }
 
-
 void EstacaoBombeamento::atualizarSimulacao() {
+    ciclo_tempo++;
+
+    Sensor* sNivel = sensores[0];
+    double nivelAntesDaLeitura = sNivel->getValor();
 
     for (Sensor* sensor : sensores) {
         sensor->ler(); 
     }
 
-    Sensor* sNivel = sensores[0];
     Sensor* sPressao = sensores[1];
+    Sensor* sTemperatura = sensores[2];
     Sensor* sVazao = sensores[3];
 
+    bool sensorTravado = (sNivel->getStatus() == "FALHA_TRAVADO" || ciclo_tempo > 45);
+
+    if (sensorTravado) {
+        sNivel->setStatus("FALHA_TRAVADO");
+        sNivel->setValor(nivelAntesDaLeitura);
+        
+        if (bomba.estaLigada()) {
+            bomba.desligar();
+        }
+    }
 
     if (bomba.estaLigada()) {
         sVazao->setValor(50.0 + (rand() % 100 - 50) / 100.0);
 
-        if (sNivel->getValor() < 100.0) {
-            sNivel->setValor(sNivel->getValor() + 0.8);
+        if (!sensorTravado && sNivel->getValor() < 100.0) {
+            sNivel->setValor(sNivel->getValor() + 1.2);
         }
 
         if (!valvulaAuxiliar.estaAberta()) {
             sPressao->setValor(sPressao->getValor() + 0.3); 
         }
+        if (sTemperatura->getValor() < 45.0) {
+            sTemperatura->setValor(sTemperatura->getValor() + 0.4);
+        }else {
+            sTemperatura->setValor(45.0 + (rand() % 10 - 5) / 10.0);
+        }
     } else {
         sVazao->setValor(0.0);
-        if (sNivel->getValor() > 0.0) {
-            sNivel->setValor(sNivel->getValor() - 0.5); // Esvazia 0.5% por segundo
+        if (!sensorTravado && sNivel->getValor() > 0.0) {
+            sNivel->setValor(sNivel->getValor() - 0.5); 
+        }
+        if (sTemperatura->getValor() > 24.0) {
+            sTemperatura->setValor(sTemperatura->getValor() - 0.2);
+        } else {
+            sTemperatura->setValor(24.0 + (rand() % 6 - 3) / 10.0);
         }
     }   
 
@@ -57,46 +79,42 @@ void EstacaoBombeamento::atualizarSimulacao() {
         sPressao->setValor(sPressao->getValor() - 0.6); 
     }
 
-    
     double nivelAtual = sNivel->getValor();
     double pressaoAtual = sPressao->getValor();
 
-    
-    if (nivelAtual > 88.0 && bomba.estaLigada()) {
-        sNivel->setStatus("ALTO");
-        if(bomba.estaLigada()) {
-            bomba.desligar();
+    if (!sensorTravado) {
+        if (nivelAtual > 88.0) {
+            sNivel->setStatus("ALTO");
+            if (bomba.estaLigada()) bomba.desligar();
         }
-    }
-   
-    else if (nivelAtual < 28.0 && !bomba.estaLigada()) {
-        sNivel->setStatus("BAIXO");
-        if(!bomba.estaLigada()) {
-            bomba.ligar();
+        else if (nivelAtual < 28.0) {
+            sNivel->setStatus("BAIXO");
+            if (!bomba.estaLigada()) bomba.ligar();
         }
-    }
-    else{
-        sNivel->setStatus("OK");
+        else {
+            sNivel->setStatus("OK");
+        }
     }
 
     if (pressaoAtual > 6.8) {
         sPressao->setStatus("SOBREPRESSAO");
         valvulaAuxiliar.abrir();
     } else if (pressaoAtual <= 4.0) {
-        if (pressaoAtual> 5.5){
+        if (pressaoAtual > 5.5) {
             sPressao->setStatus("ALTO");
-        }else{
+        } else {
             sPressao->setStatus("OK");
         }
         valvulaAuxiliar.fechar(); 
     }
-    else{
+    else {
         if (valvulaAuxiliar.estaAberta()) {
             sPressao->setStatus("ALIVIO");
         } else {
             sPressao->setStatus("OK");
         }
     }
+
     if (bomba.estaLigada()) {
         sVazao->setStatus("OK");
     } else {
@@ -105,30 +123,29 @@ void EstacaoBombeamento::atualizarSimulacao() {
 }
 
 void EstacaoBombeamento::renderizarPainel() {
-    // Identifica os sensores para extrair os dados do contrato
     Sensor* sNivel = sensores[0];
     Sensor* sPressao = sensores[1];
+    Sensor* sTemperatura = sensores[2];
     Sensor* sVazao = sensores[3];
 
-    // Envia os dados estruturados em formato JSON Lines (uma linha por objeto JSON)
-    // Atende aos campos obrigatórios: tag, valor, unidade, status (timestamp gerado no Python)
     std::cout << "{\"tag\": \"NI-59\", \"valor\": " << sNivel->getValor() 
               << ", \"unidade\": \"%\", \"status\": \"" << sNivel->getStatus() << "\"}\n";
 
     std::cout << "{\"tag\": \"PI-59\", \"valor\": " << sPressao->getValor() 
               << ", \"unidade\": \"bar\", \"status\": \"" << sPressao->getStatus() << "\"}\n";
 
+    std::cout << "{\"tag\": \"TI-59\", \"valor\": " << sTemperatura->getValor() 
+              << ", \"unidade\": \"C\", \"status\": \"" << sTemperatura->getStatus() << "\"}\n";
+
     std::cout << "{\"tag\": \"FI-59\", \"valor\": " << sVazao->getValor() 
               << ", \"unidade\": \"L/min\", \"status\": \"" << sVazao->getStatus() << "\"}\n";
 
-    // Envia o estado dos atuadores para o supervisor mapear
     std::cout << "{\"tag\": \"B-1\", \"valor\": " << (bomba.estaLigada() ? 1 : 0) 
               << ", \"unidade\": \"booleano\", \"status\": \"" << (bomba.estaLigada() ? "LIGADA" : "DESLIGADA") << "\"}\n";
 
     std::cout << "{\"tag\": \"V-1\", \"valor\": " << (valvulaAuxiliar.estaAberta() ? 1 : 0) 
               << ", \"unidade\": \"booleano\", \"status\": \"" << (valvulaAuxiliar.estaAberta() ? "ABERTA" : "FECHADA") << "\"}\n";
               
-    // Delimitador de fim de ciclo para o Python saber que o bloco terminou
     std::cout << "---FIM_CICLO---\n";
     std::cout.flush();
 }
@@ -147,12 +164,14 @@ void EstacaoBombeamento::processarComando(const std::string& comando) {
         valvulaAuxiliar.fechar();
     }
     else if (comando == "FORCAR_FALHA_NIVEL") {
-
         SensorNivel* sn = dynamic_cast<SensorNivel*>(sensores[0]);
         if (sn) sn->forcarFalhaTravado();
     } 
     else if (comando == "CORRIGIR_FALHA_NIVEL") {
         SensorNivel* sn = dynamic_cast<SensorNivel*>(sensores[0]);
-        if (sn) sn->normalizarSensor();
+        if (sn) {
+            sn->normalizarSensor();
+            ciclo_tempo = 0;
+        }
     }
 }
