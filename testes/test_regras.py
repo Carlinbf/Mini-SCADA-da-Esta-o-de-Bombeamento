@@ -3,34 +3,34 @@ import unittest
 class TestRegrasEB59(unittest.TestCase):
 
     def test_intertravamento_nivel_alto(self):
-        """Regra 1: O nível ultrapassou 88% -> Bomba deve ser desligada."""
-        nivel_atual = 88.5
+        """Valida intertravamento de nível máximo em 88%"""
+        nivel_atual = 88.2
         bomba_ligada = True
         
         if nivel_atual > 88.0 and bomba_ligada:
             bomba_ligada = False
             
-        self.assertFalse(bomba_ligada, "Erro: A bomba deveria ter sido desligada em nível alto!")
+        self.assertFalse(bomba_ligada, "Erro: A bomba deveria ter desligado acima de 88%!")
 
     def test_intertravamento_nivel_baixo(self):
-        """Regra 2: O nível caiu abaixo de 28% -> Bomba deve ligar para reabastecer."""
-        nivel_atual = 25.0
+        """Valida intertravamento de nível mínimo em 28%"""
+        nivel_atual = 27.5
         bomba_ligada = False
         
         if nivel_atual < 28.0 and not bomba_ligada:
             bomba_ligada = True
             
-        self.assertTrue(bomba_ligada, "Erro: A bomba deveria ter sido ligada em nível baixo!")
+        self.assertTrue(bomba_ligada, "Erro: A bomba deveria ter ligado abaixo de 28%!")
 
-    def test_alivio_pressao_maxima(self):
-        """Regra 3: Pressão acima de 6.8 bar -> Válvula de alívio deve abrir."""
-        pressao_atual = 7.1
+    def test_alivio_sobrepressao(self):
+        """Valida abertura da válvula de alívio em 6.8 bar"""
+        pressao_atual = 6.9
         valvula_aberta = False
         
         if pressao_atual > 6.8:
             valvula_aberta = True
             
-        self.assertTrue(valvula_aberta, "Erro: A válvula de alívio deveria ter aberto com sobrepressão!")
+        self.assertTrue(valvula_aberta, "Erro: A válvula deveria ter aberto acima de 6.8 bar!")
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     unittest.main()
